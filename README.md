@@ -18,3 +18,8 @@ in your terminal
 > python3 system.py
 
 in your terminal
+
+
+## update teasor...
+
+implementing RCSActuator in simulation....
