@@ -26,7 +26,7 @@ class Rocket:
 
 		## drag force
 		self.drag =None
-		self.Cd = 0.5
+		self.Cd = 0.3
 		
 		## Angle of Attack
 		self.aoa = None

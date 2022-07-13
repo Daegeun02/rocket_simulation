@@ -34,7 +34,7 @@ class Visualizer:
 		plt.cla()
 		plt.gca().set_xlim(-100,100)
 		plt.gca().set_ylim(-100,100)
-		plt.gca().set_zlim(0,300)
+		plt.gca().set_zlim(0,200)
 		
 
 		plt.quiver(position[0], position[1], position[2],\
