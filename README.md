@@ -15,7 +15,7 @@ in your terminal
 
 3. type 
 
-> python3 system.py
+> python3 master.py
 
 in your terminal
 
