@@ -5,7 +5,7 @@ irri rocket simulation
 ## to use
 1. type
 
-> gh repo clone Daegeun02/rocket_simulation
+> git clone https://github.com/Daegeun02/rocket_simulation
 
 in your terminal
 
