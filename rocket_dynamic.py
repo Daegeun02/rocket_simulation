@@ -1,5 +1,6 @@
 import numpy as np
 from transformer import Transformer
+import math
 
 class Rocket:
 	def __init__(self, linear_state, angular_state, dt, rockets_shape):
@@ -81,7 +82,7 @@ class Rocket:
 		body_area = self.diameter * self.length
 		rho = 1.225
 
-		self.drag = 0.5 * rho * self.Cd * (disk_area * np.sin(self.aoa) + body_area * np.cos(self.aoa)) * \
+		self.drag = 0.5 * rho * self.Cd * (disk_area * math.cos(self.aoa) + body_area * math.sin(self.aoa)) * \
 					np.linalg.norm(self.linear_state[3:])		
 
 
@@ -126,7 +127,7 @@ class Translation(Dynamic):
 
 		acceleration = self.external_force(t)
 
-		# print(acceleration)
+		# print(f"linear: {acceleration}")
 
 		new_state = np.dot(self.momentum_matrix, self.rocket.linear_state) + \
 					np.dot(self.external_matrix, acceleration) 	
@@ -164,7 +165,7 @@ class Rotation(Dynamic):
 
 		acceleration = self.external_force()
 
-		# print(acceleration)
+		# print(f"angular: {acceleration}")
 
 		new_state = np.dot(self.momentum_matrix, self.rocket.angular_state) + \
 					np.dot(self.external_matrix, acceleration)
