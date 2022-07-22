@@ -32,9 +32,7 @@ class Rocket:
 		self.aoa = None
 		
 		## Thrust
-		pitch = self.angular_state[1]
-		yaw   = self.angular_state[2]
-		self.thrust = Transformer.spherical_coordinate(pitch, yaw) * rockets_shape[7]
+		self.thrust = Transformer.euler_to_orientation(self.angular_state[:3]) * rockets_shape[7]
 		 
 	def update(self, t):
 		self.delta_mass(t)
@@ -64,14 +62,19 @@ class Rocket:
 		velocity = self.linear_state[3:]
 		speed = np.linalg.norm(velocity)
 		
-		direction = self.angular_state[:3]
-		heading = np.linalg.norm(direction)
+		orientation = Transformer.euler_to_orientation(self.angular_state[:3])
+		
+		if speed == 0:
+			self.aoa = 0
 
-		self.aoa = np.arccos(np.dot(velocity, direction) / (speed * heading + 1e-4))
+		else:
+			self.aoa = np.arccos(np.dot(velocity, orientation) / speed)
+
+		# print(math.cos(self.aoa))
 
 	def moment_of_inertia(self):
 		length2top = self.length - self.central_gravity
-		length2bot = -self.central_gravity
+		length2bot = self.central_gravity
 
 		self.inertia[0] = (1/4) * 0.5 * self.mass * self.diameter ** 2
 		self.inertia[1] = (1/3) * self.mass * (length2top ** 3 + length2bot ** 3) / self.length
@@ -135,6 +138,8 @@ class Translation(Dynamic):
 		self.rocket.linear_state = new_state
 
 	def external_force(self, t):
+
+		## thrust
 		if t > self.rocket.burnout_time:
 			self.rocket.thrust = np.array([0,0,0])
 
@@ -164,7 +169,7 @@ class Rotation(Dynamic):
 		self.dynamic_matrix()
 
 		acceleration = self.external_force()
-
+		
 		# print(f"angular: {acceleration}")
 
 		new_state = np.dot(self.momentum_matrix, self.rocket.angular_state) + \
@@ -173,20 +178,24 @@ class Rotation(Dynamic):
 		self.rocket.angular_state = new_state
 
 	def external_force(self):
-		pitch = self.rocket.angular_state[1]
-		yaw   = self.rocket.angular_state[2]
-		
-		length2top = Transformer.spherical_coordinate(pitch, yaw) * (self.rocket.length-self.rocket.central_gravity)
-		length2bot = Transformer.spherical_coordinate(pitch, yaw) * (-self.rocket.central_gravity)
+		orientation = Transformer.euler_to_orientation(self.rocket.angular_state[:3])
+
+		# print(f"orientation: {orientation}")
+
+		length2top = orientation * (self.rocket.length-self.rocket.central_gravity)
+		length2bot = orientation * (-self.rocket.central_gravity)
 
 		moment = self.rocket.drag * np.cross(length2top, self.rocket.linear_state[3:]) + \
 				 self.rocket.drag * np.cross(length2bot, self.rocket.linear_state[3:])
+		# print(f"moment: {moment}")
 
-		Eular = np.array([(self.rocket.inertia[1]-self.rocket.inertia[2])*self.rocket.angular_state[4]*self.rocket.angular_state[5],
+		Euler = np.array([(self.rocket.inertia[1]-self.rocket.inertia[2])*self.rocket.angular_state[4]*self.rocket.angular_state[5],
 						  (self.rocket.inertia[2]-self.rocket.inertia[0])*self.rocket.angular_state[5]*self.rocket.angular_state[3],
 						  (self.rocket.inertia[0]-self.rocket.inertia[1])*self.rocket.angular_state[3]*self.rocket.angular_state[4]])	
 		
-		force = moment + Eular
+		force = moment + Euler
+		print(f"force: {force}")
+		# print(f"Euler: {Euler}")
 
 		return force / self.rocket.inertia
 
@@ -195,9 +204,9 @@ class Rotation(Dynamic):
 		self.momentum_matrix = np.array([[1,0,0,self.rocket.dt,0,0],
 										 [0,1,0,0,self.rocket.dt,0],
 										 [0,0,1,0,0,self.rocket.dt],
-										 [0,0,0,1-self.rocket.drag*self.rocket.dt,0,0],
-										 [0,0,0,0,1-self.rocket.drag*self.rocket.dt,0],
-										 [0,0,0,0,0,1-self.rocket.drag*self.rocket.dt]])
+										 [0,0,0,1,0,0],
+										 [0,0,0,0,1,0],
+										 [0,0,0,0,0,1]])
 
 		super().dynamic_matrix()
 

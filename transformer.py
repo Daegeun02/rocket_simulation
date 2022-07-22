@@ -1,32 +1,32 @@
 import numpy as np
+import math
 
 class Transformer():
 
     @staticmethod
-    def body_to_earth(rocket_attitude):
+    def euler_to_orientation(rocket_attitude):
         
         ## rocket_attitude: body axis
+        roll  = rocket_attitude[0]
+        pitch = rocket_attitude[1]
+        yaw   = rocket_attitude[2]
 
-        psi = np.pi / 2
+        rotation_roll  = np.array([[1,             0,              0],
+                                   [0,np.cos(roll),-np.sin(roll)],
+                                   [0,np.sin(roll), np.cos(roll)]])
                 
-        y = np.array([[np.cos(psi), -np.sin(psi), 0],       
-                      [np.sin(psi),  np.cos(psi), 0],
-                      [          0,            0, 1]])
- 
-        transformation_mtx = y
+        rotation_pitch = np.array([[ np.cos(pitch),0,np.sin(pitch)],
+                                   [               0,1,              0],
+                                   [-np.sin(pitch),0,np.cos(pitch)]])
 
-        earth_attitude = np.dot(transformation_mtx, rocket_attitude)                    
+        rotation_yaw   = np.array([[np.cos(yaw),-np.sin(yaw),0],
+                                   [np.sin(yaw), np.cos(yaw),0],
+                                   [            0,             0,1]])
 
-        return earth_attitude
+        body2ground    = np.array([[0, 1, 0],
+                                   [0, 0,-1],
+                                   [1, 0, 0]])
 
-    @staticmethod
-    def spherical_coordinate(pitch, yaw):
+        orientation = np.dot(np.dot(body2ground, np.dot(rotation_yaw, np.dot(rotation_pitch, rotation_roll))), np.array([1,0,0]))
 
-        pitch_ = np.deg2rad(pitch)
-        yaw_   = np.deg2rad(yaw)
-
-        x = np.sin(pitch_) * np.cos(yaw_)
-        y = np.sin(pitch_) * np.sin(yaw_)
-        z = np.cos(pitch_)
-
-        return np.array([x,y,z])
+        return orientation
